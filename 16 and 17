@@ -1,0 +1,322 @@
+Let's do Q16 and Q17 practically, step by step, using VirtualBox and Ubuntu. These two experiments involve two virtual machines, but their purposes are different.
+
+* Q16 – Shared Folder: Share files between your Windows host and two Ubuntu VMs.
+
+* Q17 – VM Ping: Connect two Ubuntu VMs through a virtual network and test communication using `ping`.
+
+I'll explain exactly where to click, what to configure, and which commands to execute.
+
+### Q16 – Share a folder between two Virtual Machines
+
+### 1\. Understand what we're doing
+
+![Setting up Ubuntu shared folder in VirtualBox- Windows File Sharing](https://images.openai.com/static-rsc-4/AY1rb2rFBKnVjKXc8KD7Bno0dvMPW-7WC6aPe9IauRAK7pHZFqaheAXC94RuFVg4jwEI4Tqf-SP1nQhSkPwLbynUPaoSaYYWTLrAkU7sr1grYoQHpNx7VwCUzJW7kLzKLi1KYUVXnyfKu_Er5FqbE6OW-aUtLfcet46sG-nD7Y6roB8EIIBhuUF-1c5xWoL3?purpose=fullsize)
+
+Imagine:
+
+* Your laptop (Windows) has a folder called `VM-Share`.
+
+* VM1 and VM2 are both Ubuntu.
+
+* Both VMs can access the same folder.
+
+If you create a file in VM1, you should be able to see that file in VM2.
+
+### 2\. Create the shared folder in Windows
+
+First, don't open your VMs yet.
+
+* Open Windows File Explorer.
+
+* Go to `C:\`
+
+* Create a folder named `VM-Share`.
+
+* Inside it, create a text file named `hello.txt`.
+
+* Write `Hello from Windows` inside it.
+
+Your folder should look like this:
+
+```text
+C:\
+ └── VM-Share
+      └── hello.txt
+```
+
+### 3\. Configure VM1
+
+* Open VirtualBox.
+
+* Select your Ubuntu VM1.
+
+* Click Settings.
+
+* Select Shared Folders.
+
+* Click the small folder icon with a plus (+).
+
+* Enter the following:
+
+![How to share folders between your Ubuntu Virtualbox and your host machine – ITSolutionDesign (Martin's technology notepad)](https://images.openai.com/static-rsc-4/FvLsKH7Pt-wD84jKCvXzL09VLHg_oxr6318sjKJLWIsK7d1j20UblNyTZWsB7Ze5uLGDbRq9b09d8ugptu5DqclClfcSe3Xh44Kd1cpw0ehS1GKE7VNxgg15kS7PREvC-w7BInSELVy9a-Sm8oYJzpgzCWqL-8B0e0Nk6PakujAerZBwenWcDhjtksj4Gbpz?purpose=fullsize)
+
+| Option         | Value        |
+| -------------- | ------------ |
+| Folder Path    | C:\\VM-Share |
+| Folder Name    | VM-Share     |
+| Auto-mount     | Tick         |
+| Make Permanent | Tick         |
+
+* Click OK.
+
+* Start VM1.
+
+### 4\. Configure VM2
+
+Repeat exactly the same steps for VM2.
+
+Both VMs must use the same host folder path and shared folder name.
+
+### 5\. Install Guest Additions (if not already installed)
+
+Guest Additions are required for VirtualBox shared folders to work properly.
+
+Inside each Ubuntu VM:
+
+* From the VirtualBox menu, select Devices.
+
+* Click Insert Guest Additions CD Image.
+
+* Open the Ubuntu terminal.
+
+Execute:
+
+```bash
+sudo apt update
+sudo apt install build-essential dkms linux-headers-$(uname -r)
+```
+
+Then execute:
+
+```bash
+sudo sh /media/$USER/VBox_GAs_*/VBoxLinuxAdditions.run
+```
+
+Restart:
+
+```bash
+sudo reboot
+```
+
+Repeat in both VMs if Guest Additions weren't already installed.
+
+### 6\. Access the shared folder in Ubuntu
+
+Open the terminal in VM1:
+
+```bash
+cd /media/sf_VM-Share
+ls
+```
+
+You should see:
+
+```text
+hello.txt
+```
+
+Read the file:
+
+```bash
+cat hello.txt
+```
+
+Expected output:
+
+```text
+Hello from Windows
+```
+
+Now create a file from VM1:
+
+```bash
+echo "Hello from VM1" > vm1.txt
+```
+
+Open VM2 and execute:
+
+```bash
+cd /media/sf_VM-Share
+ls
+cat vm1.txt
+```
+
+Expected output:
+
+```text
+Hello from VM1
+```
+
+Q16 completed
+
+If you get a permission error, execute this inside Ubuntu:
+
+```bash
+sudo usermod -aG vboxsf $USER
+sudo reboot
+```
+
+### Q17 – Establish network connectivity between two VMs using Ping
+
+### 1\. Understand what we're doing
+
+![linux - VirtualBox Internal Network's virtual switch - Super User](https://images.openai.com/static-rsc-4/EBB30A2oipSxw95s43ASkA49kWEpRF-O-H_ISxl-0Wbak5zPwqu6bsRdeHN_4EEyQjtBRKg9O2bn8U6NUlN8V3RFSZx_JpTU4Ffy6eyA14w-jZgMmKsmSTuWWmizIh2d0WkM0eRtu0jDz_-1e0OcmTx1k_jgfOdOsSZjlX-d9UZWES_5LAEg93yOKjToBX7J?purpose=fullsize)
+
+Here, we are connecting two Ubuntu VMs through a virtual network.
+
+* VM1 gets IP address `192.168.10.1`.
+
+* VM2 gets IP address `192.168.10.2`.
+
+* Both VMs belong to the same network.
+
+* We'll use `ping` to check whether they can communicate.
+
+### 2\. Configure the network in VirtualBox
+
+First, shut down both VMs completely.
+
+### VM1 configuration
+
+* Open VirtualBox.
+
+* Select VM1.
+
+* Click Settings → Network.
+
+* Under Adapter 1, tick Enable Network Adapter.
+
+* In Attached to, select Internal Network.
+
+* In Name, enter:
+
+```text
+cloudnet
+```
+
+7\. Click OK.
+
+![networking - VirtualBox: test Internal Network connection between two machines - Super User](https://images.openai.com/static-rsc-4/iUIYXOlNnHo1r4fb9Zyf1cdgPi9K6md_UIFqNB2Y-L23ZArDbandRB0hp21CHjIHl0LMa_df7pmZRt7F1RAPgnjwx4k2sQnEDi1JXA-tcAFhlgxblg5U38KOEQMXDG0sKwHmLiVwGgN7CGcM2JC8QJyNsDcOFj3H76OWA8XST-1hCWO2tPnkWspYGOmbyWFI?purpose=fullsize)
+
+### VM2 configuration
+
+Repeat the exact same steps for VM2.
+
+Important
+
+Both VMs must have:
+
+* Attached to: Internal Network
+
+* Name: `cloudnet`
+
+The network name must match exactly.
+
+### 3\. Assign an IP address to VM1
+
+Start both VMs.
+
+Inside VM1:
+
+* Open Ubuntu Settings.
+
+* Select Network.
+
+* Under Wired, click the gear icon.
+
+* Open the IPv4 tab.
+
+* Change IPv4 Method to Manual.
+
+Enter:
+
+| Field   | Value         |
+| ------- | ------------- |
+| Address | 192.168.10.1  |
+| Netmask | 255.255.255.0 |
+| Gateway | Leave blank   |
+
+* Click Apply.
+
+* Turn the wired connection off and on again if necessary.
+
+![Network Recommendations - Create® 3 Docs](https://images.openai.com/static-rsc-4/DMZrqfP0hRXn1-bwkm_lkwEyyKJo7WID-8LzBElV_uXgjG6ROG3m2WPbO_RYoUeECzC0wJQf-laCvHAprq2GjGGY8-SvhxQHpn6AykQbKerbyfO3tvywQbQWfXl-v698wf3hfC9wUNF_tMPyxd3nqVK4XFk4Iw_vaKkvk58GejaWgYAzUZCqCzZS1vPUQZUq?purpose=fullsize)
+
+### 4\. Assign an IP address to VM2
+
+Follow the same procedure in VM2.
+
+Enter:
+
+| Field   | Value         |
+| ------- | ------------- |
+| Address | 192.168.10.2  |
+| Netmask | 255.255.255.0 |
+| Gateway | Leave blank   |
+
+Click Apply.
+
+Why different IP addresses?
+
+Each VM needs its own unique IP address. Both addresses must be in the same subnet so they can communicate directly.
+
+### 5\. Test connectivity using Ping
+
+Open the terminal in VM1.
+
+First, check its IP address:
+
+```bash
+ip -4 addr
+```
+
+Now ping VM2:
+
+```bash
+ping -c 4 192.168.10.2
+```
+
+Expected output:
+
+```text
+PING 192.168.10.2 (192.168.10.2)
+
+64 bytes from 192.168.10.2: icmp_seq=1 ttl=64 time=0.5 ms
+64 bytes from 192.168.10.2: icmp_seq=2 ttl=64 time=0.4 ms
+
+4 packets transmitted, 4 received, 0% packet loss
+```
+
+Now go to VM2 and ping VM1:
+
+```bash
+ping -c 4 192.168.10.1
+```
+
+If you receive replies, both VMs are communicating successfully.
+
+Q17 completed
+
+### 6\. If Ping doesn't work
+
+Check these things:
+
+* Both VMs are using Internal Network.
+
+* Both network names are exactly `cloudnet`.
+
+* VM1 and VM2 have different IP addresses.
+
+* Both IP addresses use the same subnet mask (`255.255.255.0`).
+
+* Both network connections are enabled..
